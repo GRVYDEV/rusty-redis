@@ -3,6 +3,9 @@ use log::{debug, error, trace, warn};
 use tokio::net::{TcpListener, TcpStream};
 
 mod connection;
+mod resp_codec;
+
+pub type Error = Box<dyn std::error::Error + Send + Sync>;
 
 /// A simple redis server written in Rust
 #[derive(Parser, Debug)]

@@ -1,41 +1,26 @@
 use std::io;
 
+use crate::resp_codec::RespCodec;
+use futures::{SinkExt, StreamExt};
 use log::{debug, error, trace, warn};
 use tokio::net::TcpStream;
+use tokio_util::codec::Framed;
 
 pub struct Connection {}
 
 impl Connection {
     pub async fn init(socket: TcpStream) {
-        let mut buf = vec![0; 4096];
+        let mut frame = Framed::new(socket, RespCodec {});
 
         loop {
-            match socket.readable().await {
-                Ok(_) => {}
-                Err(e) => {
-                    error!("error waiting for socket to be readable {:?}", e);
+            match frame.next().await {
+                Some(Ok(command)) => trace!("got command {:?}", command),
+                Some(Err(e)) => error!("got error {:?}", e),
+                None => {
+                    trace!("socket went away goodbye");
                     return;
                 }
             }
-
-            let n = match socket.try_read(&mut buf) {
-                Ok(n) if n == 0 => {
-                    trace!("socket closed");
-                    return;
-                }
-                Ok(n) => {
-                    buf.truncate(n);
-                    n
-                }
-                Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => continue,
-                Err(e) => {
-                    error!("failed to read from socket {:?}", e);
-                    return;
-                }
-            };
-
-            trace!("got {} bytes", n);
-            trace!("read {:?}", String::from_utf8_lossy(&buf[..n]).to_string());
         }
     }
 }
