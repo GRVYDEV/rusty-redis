@@ -1,13 +1,12 @@
 use bytes::{Buf, Bytes, BytesMut};
-use log::{error, trace, warn};
+use log::{trace, warn};
 use std::{
     fmt,
-    io::{self, BufRead, Cursor, Read},
+    io::{self, Cursor},
     string::FromUtf8Error,
 };
 use tokio_util::codec::{Decoder, Encoder};
 
-const ARRAY: u8 = b'*';
 const R: u8 = b'\r';
 const N: u8 = b'\n';
 
